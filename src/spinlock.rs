@@ -3,6 +3,7 @@
 
 use core::cell::UnsafeCell;
 use core::hint::spin_loop;
+use core::marker::PhantomData;
 use core::ops::{Deref, DerefMut};
 use core::sync::atomic::{AtomicBool, Ordering};
 
@@ -41,7 +42,10 @@ impl<T> SpinLock<T> {
             // 기다리는 중이라고 CPU에 알려 준다. 스핀 루프임을 아는 CPU는 전력이나 파이프라인을 아낄 수 있다.
             spin_loop();
         }
-        SpinLockGuard { lock: self }
+        SpinLockGuard {
+            lock: self,
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -49,6 +53,10 @@ impl<T> SpinLock<T> {
 // 해제를 잊거나 두 번 하는 실수가 구조적으로 생기지 않는다.
 pub struct SpinLockGuard<'a, T> {
     lock: &'a SpinLock<T>,
+    // 가드를 여러 코어가 공유하면 각 코어가 Deref로 &T를 얻는다. &SpinLock<T>만 들고 있으면
+    // T: Send만으로 가드가 Sync가 되어, Cell처럼 Sync가 아닌 T를 락 없이 함께 고칠 수 있다.
+    // &T를 가진 것처럼 표시해 가드가 T: Sync일 때만 Sync가 되게 한다(std MutexGuard와 같은 규칙).
+    _marker: PhantomData<&'a T>,
 }
 
 impl<T> Deref for SpinLockGuard<'_, T> {
