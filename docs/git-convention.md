@@ -54,6 +54,7 @@
 
 - 제목은 커밋 메시지 첫 줄과 같은 형식: `<유형>: <한국어 요약>`
 - 브랜치 하나에서 PR 하나를 만든다.
+- 본문에 그 PR의 ADR 경로(`docs/adr/NNNN-<주제>.md`)를 적는다.
 - 병합은 merge commit으로 한다(`gh stack merge --merge`, 단독 PR은 `gh pr merge --merge`). 커밋 단위로 Codex 검토를 하므로 PR 안의 커밋 기록을 그대로 남긴다.
 
 ## `gh stack` 흐름
@@ -78,4 +79,5 @@ gh stack merge --merge
 ```
 
 - 아래쪽 PR을 고치면 `gh stack rebase`로 위쪽 브랜치를 다시 올린다.
-- PR 생성과 병합은 사용자가 요청할 때 한다.
+- PR은 draft로 만든다(`gh stack submit --auto`는 draft로 만든다). 올리기 전에 빌드·확인 명령·코드 리뷰를 마친다.
+- 병합은 사용자가 요청할 때 한다.

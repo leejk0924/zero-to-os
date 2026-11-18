@@ -12,6 +12,7 @@ RISC-V 64용 커널을 Rust로 처음부터 만들며 OS를 배우는 프로젝�
 | `docs/architecture.md` | 지금 코드의 구조 | 코드를 읽거나 고치기 전 |
 | `docs/git-convention.md` | 커밋 유형, 브랜치·PR 규칙, `gh stack` 흐름 | 브랜치를 만들거나 커밋·PR을 만들 때 |
 | `docs/chat-protocol.md` | 에이전트끼리 `.chat/`에서 주고받는 메시지 형식과 템플릿 | 서브에이전트에게 지시하거나 보고·결정 요청·검토 결과를 주고받을 때 |
+| `docs/adr/` | PR마다 구현하며 고른 것과 이유 (ADR) | 코드가 왜 이렇게 생겼는지 알고 싶을 때, PR을 만들 때 |
 | `docs/troubleshooting.md` | 겪은 문제, 원인, 해결 | 빌드·실행·도구가 실패했을 때, 원인을 찾기 전에 먼저 |
 | `docs/decision/specs/` | 단계별 설계 | 그 단계를 작업할 때 |
 | `docs/decision/plans/` | 단계별 구현 계획 | 그 단계를 구현할 때 |
@@ -29,7 +30,10 @@ RISC-V 64용 커널을 Rust로 처음부터 만들며 OS를 배우는 프로젝�
    1. 태스크마다 `gh stack`으로 브랜치를 하나 쌓고(`docs/git-convention.md`), 새 서브에이전트가 그 브랜치에서 태스크 하나를 구현하고 커밋한다. 태스크 하나가 PR 하나가 된다.
    2. Codex가 그 커밋을 검토한다: `codex exec review --commit <SHA>`
    3. 지적 사항을 분류해 타당한 것을 서브에이전트가 고친다. Codex 재검토는 한 번 한다.
-   4. 학습 노트를 쓴다.
+   4. 메인 세션이 직접 검증한다: 빌드 경고 없이 컴파일되는지, 계획의 확인 명령, 코드 리뷰.
+   5. ADR을 `docs/adr/`에 PR마다 하나 쓴다(`docs/adr/README.md`). `.chat/`에서 받은 결정 요청은 메인 세션이 판단해 답하고 ADR에 남긴다.
+   6. draft PR로 올리고 본문에 ADR 경로를 적는다.
+   7. 학습 노트를 쓴다.
 
    기능 구현은 서브에이전트가 한다. 에이전트끼리 주고받는 지시, 보고, 결정 요청, 검토 결과는 `docs/chat-protocol.md`의 템플릿으로 `.chat/`에서 주고받는다. `.chat/`은 커밋하지 않는다.
 
