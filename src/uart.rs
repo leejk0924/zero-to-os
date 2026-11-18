@@ -3,6 +3,8 @@
 use core::fmt::{self, Write};
 use core::ptr::{read_volatile, write_volatile};
 
+use crate::spinlock::SpinLock;
+
 const BASE: usize = 0x1000_0000;
 
 // 레지스터 오프셋. LCR의 DLAB 비트가 서 있으면 0, 1번은 보율 분주값(DLL, DLM)이 된다.
@@ -57,9 +59,18 @@ impl Write for Uart {
     }
 }
 
+// 여러 코어가 동시에 쓰면 바이트 단위로 번갈아 들어가 글자가 섞이므로 UART 출력은 이 락을 거친다.
+static UART: SpinLock<Uart> = SpinLock::new(Uart);
+
 // 매크로가 다른 모듈에서 펼쳐져도 부를 수 있어야 하므로 pub이다. 직접 부르지 않고 print!를 쓴다.
-// 지금은 0번 코어만 출력하므로 락이 없다. 여러 코어가 동시에 쓰면 글자가 섞인다.
+// 서식 처리부터 마지막 바이트까지 락을 쥔 채 출력해야 한 번의 print!가 한 덩어리로 나간다.
 pub fn _print(args: fmt::Arguments) {
+    let _ = UART.lock().write_fmt(args);
+}
+
+// 패닉 전용. 락을 쥔 코어가 패닉하면 락이 영영 풀리지 않으므로, 락을 기다리면 메시지가 안 나온다.
+// 다른 코어의 출력과 섞일 수는 있지만 메시지가 보이는 쪽을 택한다.
+pub fn print_unlocked(args: fmt::Arguments) {
     let _ = Uart.write_fmt(args);
 }
 
