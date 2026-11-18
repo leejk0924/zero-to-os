@@ -54,6 +54,7 @@
 
 - 제목은 커밋 메시지 첫 줄과 같은 형식: `<유형>: <한국어 요약>`
 - 브랜치 하나에서 PR 하나를 만든다.
+- 병합은 merge commit으로 한다(`gh stack merge --merge`, 단독 PR은 `gh pr merge --merge`). 커밋 단위로 Codex 검토를 하므로 PR 안의 커밋 기록을 그대로 남긴다.
 
 ## `gh stack` 흐름
 
@@ -73,7 +74,7 @@ gh stack view
 gh stack sync
 
 # 아래 PR부터 차례대로 병합한다
-gh stack merge
+gh stack merge --merge
 ```
 
 - 아래쪽 PR을 고치면 `gh stack rebase`로 위쪽 브랜치를 다시 올린다.
