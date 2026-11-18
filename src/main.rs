@@ -85,14 +85,14 @@ fn hartid() -> usize {
 static PANICKING: AtomicBool = AtomicBool::new(false);
 
 // no_std에서는 패닉 처리기를 직접 정의해야 한다. 원인을 알 수 있게 메시지를 출력하고 멈춘다.
-// UART 락을 쥔 채 패닉했을 수 있으므로 println! 대신 락을 거치지 않는 출력을 쓴다.
-// 락이 없으므로 여러 코어가 동시에 패닉하면 메시지끼리 글자가 섞인다.
+// UART 락을 쥔 채 패닉했을 수 있으므로 println! 대신 락을 시도만 하는 패닉 전용 출력을 쓴다.
+// 그 출력은 락을 끝내 못 얻으면 락 없이 쓰므로, 여러 코어가 동시에 패닉하면 메시지끼리 섞일 수 있다.
 // 그래서 처음 패닉한 코어만 출력하고, 나머지는 출력 없이 멈춘다(Linux의 panic_cpu, xv6의 panicked와 같은 방식).
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     // swap은 읽기와 쓰기를 한 번에 하므로, 동시에 와도 false를 받는 코어는 하나뿐이다.
     if !PANICKING.swap(true, Ordering::AcqRel) {
-        uart::print_unlocked(format_args!("커널 패닉: {}\n", info));
+        uart::print_panic(format_args!("커널 패닉: {}\n", info));
     }
     loop {
         unsafe { asm!("wfi") };
