@@ -10,6 +10,7 @@ RISC-V 64용 커널을 Rust로 처음부터 만들며 OS를 배우는 프로젝�
 | `docs/spec.md` | 목표, 범위, 단계 로드맵과 진행 상태 | 작업을 시작할 때마다 |
 | `docs/decision/decisions.md` | 확정된 결정과 이유 | 설계 선택이 필요할 때. 여기 있는 결정은 그대로 따른다 |
 | `docs/architecture.md` | 지금 코드의 구조 | 코드를 읽거나 고치기 전 |
+| `docs/git-convention.md` | 커밋 유형, 브랜치·PR 규칙, `gh stack` 흐름 | 브랜치를 만들거나 커밋·PR을 만들 때 |
 | `docs/troubleshooting.md` | 겪은 문제, 원인, 해결 | 빌드·실행·도구가 실패했을 때, 원인을 찾기 전에 먼저 |
 | `docs/decision/specs/` | 단계별 설계 | 그 단계를 작업할 때 |
 | `docs/decision/plans/` | 단계별 구현 계획 | 그 단계를 구현할 때 |
@@ -24,7 +25,7 @@ RISC-V 64용 커널을 Rust로 처음부터 만들며 OS를 배우는 프로젝�
 1. **설계** — `docs/decision/specs/YYYY-MM-DD-<주제>-design.md`를 쓴다. 사용자만 정할 수 있는 선택은 `docs/decision/qna.md`에 추천과 함께 질문으로 적고 답을 기다린다. 완료: 사용자가 설계를 승인했다.
 2. **계획** — `docs/decision/plans/YYYY-MM-DD-<주제>.md`를 쓴다. 완료: 모든 태스크에 확인 명령과 기대 결과, 학습 노트 항목이 있고 사용자가 승인했다.
 3. **구현** — 태스크마다 아래를 반복한다.
-   1. 새 서브에이전트가 태스크 하나를 구현하고 커밋한다.
+   1. 태스크마다 `gh stack`으로 브랜치를 하나 쌓고(`docs/git-convention.md`), 새 서브에이전트가 그 브랜치에서 태스크 하나를 구현하고 커밋한다. 태스크 하나가 PR 하나가 된다.
    2. Codex가 그 커밋을 검토한다: `codex exec review --commit <SHA>`
    3. 지적 사항을 분류해 타당한 것을 서브에이전트가 고친다. Codex 재검토는 한 번 한다.
    4. 학습 노트를 쓴다.
