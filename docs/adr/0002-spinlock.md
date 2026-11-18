@@ -14,6 +14,7 @@
 | 결정 | 이유 | 버린 대안 |
 |---|---|---|
 | `SpinLock<T>`를 `AtomicBool` + `compare_exchange_weak(false, true, Acquire, Relaxed)` + `spin_loop()`로 짓고, 가드의 `Drop`에서 `store(false, Release)`로 푼다. `unsafe impl<T: Send> Sync` | 계획대로 | |
+| `SpinLockGuard`에 `_marker: PhantomData<&'a T>` 필드를 둬, 가드는 `T: Send + Sync`일 때만 `Sync`다 | Codex 지적. `&SpinLock<T>`만 들면 `T: Send`만으로 가드가 `Sync`가 되어, `Cell`처럼 `Sync`가 아닌 `T`를 여러 코어가 한 가드의 `Deref`로 락 없이 함께 고칠 수 있다. std `MutexGuard`와 같은 규칙이고 `unsafe` 없이 컴파일러가 판단한다 | `PhantomData<*const ()>`로 자동 `Sync`를 끄고 `unsafe impl<T: Sync> Sync`를 직접 쓰기(같은 결과를 `unsafe` 약속으로 얻는다) |
 | 락이 크기 0인 `Uart` 값을 감싼다: `static UART: SpinLock<Uart>` | 출력 경로가 `UART.lock()`이 돌려주는 가드를 거쳐야만 `write_fmt`를 부를 수 있다. 락과 보호 대상이 한 값이라 "락을 잡고 출력"이 구조로 강제된다 | `SpinLock<()>`를 따로 두고 `Uart`를 아무 데서나 만들기(락을 잊어도 컴파일된다) |
 | 락은 `_print` 한 곳에서 `UART.lock().write_fmt(args)`로 잡는다 | 가드가 문장 끝까지 살아 있어 서식 처리부터 마지막 바이트까지 락 안이다. `println!`은 `print!("{}\n", ..)` 한 번이라 줄바꿈까지 한 덩어리로 나간다. 태스크 2가 출력을 `_print` 한 곳으로 모아 둔 덕에 바뀐 곳이 이 한 줄이다 | 매크로 안에서 락을 잡기(매크로가 펼쳐지는 곳마다 락 코드가 생긴다) |
 | `print_unlocked`는 `Uart`를 새로 만들어 바로 쓴다. 패닉 핸들러는 `print_unlocked(format_args!("커널 패닉: {}\n", info))`를 부른다 | 락을 쥔 코어가 패닉하면 그 락은 영영 풀리지 않는다. 실험에서 패닉 핸들러를 `println!`으로 두면 메시지가 전혀 나오지 않았다. 다른 코어 출력과 섞일 위험보다 메시지가 보이는 쪽이 중요하다 | 패닉 때 락을 강제로 풀기(다른 코어가 쓰던 중이면 똑같이 섞이고, 락의 불변식을 깬다), `try_lock` 후 실패하면 건너뛰기(락을 쥔 코어 자신이 패닉하면 메시지가 안 나온다) |
