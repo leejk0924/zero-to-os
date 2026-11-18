@@ -50,7 +50,7 @@
 
 ---
 
-### 태스크 1: 빌드 뼈대와 어셈블리에서 글자 출력
+### Task 1: 빌드 뼈대와 어셈블리에서 글자 출력
 
 **파일:** 생성 `rust-toolchain.toml`, `Cargo.toml`, `.cargo/config.toml`, `build.rs`, `kernel.ld`, `src/entry.S`, `src/main.rs`, `scripts/check.sh`, `.gitignore`
 
@@ -138,7 +138,7 @@ git commit -m "빌드 뼈대와 진입 코드 추가: 코어마다 어셈블리�
 
 ---
 
-### 태스크 2: 코어별 스택, 대기, Rust 진입, UART 드라이버, `println!`
+### Task 2: 코어별 스택, 대기, Rust 진입, UART 드라이버, `println!`
 
 **파일:** 수정 `src/entry.S`, `src/main.rs` / 생성 `src/uart.rs`
 
@@ -214,7 +214,7 @@ git commit -m "코어별 스택과 Rust 진입, UART 출력 추가"
 
 ---
 
-### 태스크 3: `SpinLock`과 여러 코어의 동시 출력
+### Task 3: `SpinLock`과 여러 코어의 동시 출력
 
 **파일:** 생성 `src/spinlock.rs` / 수정 `src/uart.rs`, `src/main.rs`
 
@@ -275,7 +275,7 @@ git commit -m "SpinLock 추가: 여러 코어의 UART 출력이 섞이지 않게
 
 ---
 
-### 태스크 4: M 모드에서 S 모드로 전환, `kmain()`
+### Task 4: M 모드에서 S 모드로 전환, `kmain()`
 
 **파일:** 수정 `src/main.rs`
 
