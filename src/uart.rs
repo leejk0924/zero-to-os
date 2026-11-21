@@ -68,9 +68,23 @@ pub fn _print(args: fmt::Arguments) {
     let _ = UART.lock().write_fmt(args);
 }
 
-// 패닉 전용. 락을 쥔 코어가 패닉하면 락이 영영 풀리지 않으므로, 락을 기다리면 메시지가 안 나온다.
-// 다른 코어의 출력과 섞일 수는 있지만 메시지가 보이는 쪽을 택한다.
-pub fn print_unlocked(args: fmt::Arguments) {
+// 패닉 출력이 UART 락을 몇 번까지 시도할지. QEMU에서 다른 코어의 println! 한 줄이 끝날 때까지
+// 기다리고도 남는 횟수다(근거는 ADR 0003).
+const PANIC_LOCK_TRIES: usize = 100_000;
+
+// 패닉 전용. 다른 코어가 println! 중이면 그 줄이 끝날 때까지 락을 기다려 글자가 섞이지 않게 한다.
+// 락을 얻으면 돌려주지 않는다. 패닉 뒤에 다른 코어의 출력이 메시지 사이에 끼어들지 못하게 막는다.
+// 이 코어가 락을 쥔 채 패닉했다면 락은 영영 풀리지 않으므로, 정해진 횟수만 시도하고 락 없이 출력한다.
+// 섞일 수는 있지만 메시지가 보이는 쪽을 택한다(Linux printk가 패닉 때 콘솔 락을 무시하는 것과 같다).
+pub fn print_panic(args: fmt::Arguments) {
+    for _ in 0..PANIC_LOCK_TRIES {
+        if let Some(mut guard) = UART.try_lock() {
+            let _ = guard.write_fmt(args);
+            core::mem::forget(guard);
+            return;
+        }
+        core::hint::spin_loop();
+    }
     let _ = Uart.write_fmt(args);
 }
 
