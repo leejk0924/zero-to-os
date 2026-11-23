@@ -5,6 +5,7 @@
 // print!/println! 매크로를 이 파일에서 쓰려면 모듈을 먼저 선언해야 한다.
 #[macro_use]
 mod uart;
+mod spinlock;
 
 use core::arch::{asm, global_asm};
 use core::panic::PanicInfo;
@@ -26,22 +27,24 @@ static BOOT_READY: AtomicUsize = AtomicUsize::new(0);
 extern "C" fn start(hartid: usize) -> ! {
     if hartid == 0 {
         uart::init();
-        // mstatus는 M 모드에서만 읽을 수 있는 CSR이다. 읽기에 성공하면 지금 M 모드라는 증거가 된다.
-        let mstatus: usize;
-        unsafe { asm!("csrr {}, mstatus", out(reg) mstatus) };
-        println!("[M] hart {}: mstatus={:#x}", hartid, mstatus);
         // Release: 위의 초기화 결과가 이 저장보다 먼저 다른 코어에 보이도록 한다.
         BOOT_READY.store(1, Ordering::Release);
     }
+    // mstatus는 M 모드에서만 읽을 수 있는 CSR이다. 읽기에 성공하면 지금 M 모드라는 증거가 된다.
+    // 모든 코어가 동시에 출력하므로 println!의 락이 없으면 줄이 섞인다.
+    let mstatus: usize;
+    unsafe { asm!("csrr {}, mstatus", out(reg) mstatus) };
+    println!("[M] hart {}: mstatus={:#x}", hartid, mstatus);
     loop {
         unsafe { asm!("wfi") };
     }
 }
 
 // no_std에서는 패닉 처리기를 직접 정의해야 한다. 원인을 알 수 있게 메시지를 출력하고 멈춘다.
+// UART 락을 쥔 채 패닉했을 수 있으므로 println! 대신 락을 거치지 않는 출력을 쓴다.
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    println!("커널 패닉: {}", info);
+    uart::print_unlocked(format_args!("커널 패닉: {}\n", info));
     loop {
         unsafe { asm!("wfi") };
     }
