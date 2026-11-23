@@ -47,6 +47,19 @@ impl<T> SpinLock<T> {
             _marker: PhantomData,
         }
     }
+
+    // 기다리지 않고 한 번만 시도한다. 락을 쥔 코어가 다시 오지 않을 수도 있는 곳(패닉 처리기)에서
+    // 영원히 돌지 않고, 몇 번 시도할지를 부르는 쪽이 정하게 한다.
+    // lock()과 달리 반복하지 않으므로 가짜 실패가 없는 strong 버전을 쓴다.
+    pub fn try_lock(&self) -> Option<SpinLockGuard<'_, T>> {
+        self.locked
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .ok()
+            .map(|_| SpinLockGuard {
+                lock: self,
+                _marker: PhantomData,
+            })
+    }
 }
 
 // 가드가 살아 있는 동안만 데이터에 닿을 수 있고, 가드가 사라지면 락이 풀린다.
